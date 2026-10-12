@@ -3,14 +3,15 @@
 A small open model that listens. Speech in, text out, for 11 Indian languages and English.
 Later it will also give decisions from the same sound: is the speaker done, should the agent stop.
 
-**Status: the design is set. No model is trained yet, and there is no checkpoint.**
+**Status: the first full training run is in progress. Checkpoints appear on Hugging Face as it runs. No result is claimed yet.**
 
 ## The model
 
 | Part | What it does | Where it comes from |
 |---|---|---|
-| Ears | turn sound into frames | the audio part of Qwen3-ASR-0.6B |
+| Ears | turn sound into frames | the audio part of Qwen3-ASR-1.7B, trained further |
 | Bridge | fit the frames to the writer | new, small |
+| Vote layer | name a piece of a word for each frame; a helper during training | new, small |
 | Writer | write the text | Gemma 3 270M |
 | Decision head | answer fixed questions from the frames | later |
 
