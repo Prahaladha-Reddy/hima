@@ -3,7 +3,7 @@
 Sound goes through four steps:
   1. sound          16,000 numbers for each second
   2. sound picture  100 columns for each second, 128 numbers in a column   (made on the CPU, see data.py)
-  3. frames         12.5 frames for each second, 896 numbers in a frame    (the ears make these)
+  3. frames         about 13 frames for each second, 896 numbers each     (the ears make these)
   4. votes          for each frame, one score for every piece in our table (the vote layer makes these)
 
 The ears come from Qwen3-ASR-0.6B and already hear. Training teaches them our languages.

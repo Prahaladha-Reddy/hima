@@ -12,7 +12,7 @@ The writer reads one long row of vectors and predicts the next piece of text, ag
 Training: the true text is given, and the loss asks at each place "how likely was the true next piece?".
 Use:      nothing is given after [now write]; the writer chooses a piece, reads it back in, and goes on.
 
-This is the same kind of objective as the one the ears were first trained with by their makers:
+This is the same family of objective as the first stage of the ears' makers:
 a writer that looks at all the frames and writes the text piece by piece.
 """
 import torch

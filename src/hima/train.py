@@ -186,7 +186,7 @@ def main():
             vote_part, writer_part = model(picture, mask, votes, text_ids, lengths)
         per_clip = tr["writer_weight"] * writer_part + tr["vote_weight"] * vote_part
         good = torch.isfinite(per_clip)
-        # A clip with a broken loss gets loss 0. We do NOT skip the step: with many GPUs every copy must
+        # A clip with a broken loss is left out of the mean. We do NOT skip the step: with many GPUs every copy must
         # call backward() the same number of times, or all of them wait for ever.
         loss = torch.where(good, per_clip, torch.zeros_like(per_clip)).sum() / good.sum().clamp(min=1)
 
