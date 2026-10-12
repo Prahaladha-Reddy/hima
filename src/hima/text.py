@@ -37,6 +37,21 @@ def clean_text(text):
     return " ".join("".join(out).lower().split())
 
 
+def looks_like_a_loop(text):
+    """True for a text that is stuck on a word: "and then then then then then".
+
+    Text that a machine wrote sometimes ends in such a loop. A clip with a loop as its text teaches the
+    writer to loop too, so we drop it. Two signs: one word four times in a row, or a long text made of very few words.
+    """
+    words = text.split()
+    run = 1
+    for a, b in zip(words, words[1:]):
+        run = run + 1 if a == b else 1
+        if run >= 4:
+            return True
+    return len(words) >= 12 and len(set(words)) / len(words) < 0.25
+
+
 class PieceTable:
     """The pieces that the vote layer can name.
 

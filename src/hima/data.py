@@ -26,7 +26,7 @@ import torch
 from torch.utils.data import IterableDataset, get_worker_info
 
 from .ears import load_feature_maker, make_sound_picture
-from .text import PieceTable, clean_text, texts_differ
+from .text import PieceTable, clean_text, looks_like_a_loop, texts_differ
 
 RATE = 16000
 
@@ -120,11 +120,14 @@ def read_table(where, spec):
     wanted = [spec["id"], spec["text"], spec["key"], spec["seconds"]] + second
     table = pq.read_table(io.BytesIO(read_all(where)))
     table = table.select([c for c in wanted if c in table.column_names])
-    rows, dropped = {}, {"no_text": 0, "texts_differ": 0}
+    rows, dropped = {}, {"no_text": 0, "texts_differ": 0, "loop_text": 0}
     for r in table.to_pylist():
         text = clean_text(r.get(spec["text"]) or "")
         if not text or "redacted" in text:
             dropped["no_text"] += 1
+            continue
+        if looks_like_a_loop(text):
+            dropped["loop_text"] += 1
             continue
         if second:
             others = [r.get(c) for c in second if r.get(c)]
@@ -284,7 +287,7 @@ class ClipStream(IterableDataset):
         torch.set_num_threads(1)
         pieces = PieceTable.load(self.pieces_path)
         feature_maker = load_feature_maker(self.model_dir)
-        counts = {k: 0 for k in ("no_text", "texts_differ", "held_out", "length", "too_dense", "bad_sound", "shard_failed")}
+        counts = {k: 0 for k in ("no_text", "texts_differ", "loop_text", "held_out", "length", "too_dense", "bad_sound", "shard_failed")}
         by_lang = self.my_shards(slot, self.world * workers)
         if not by_lang:
             raise RuntimeError("process %d got no shard: use fewer workers or more shards" % slot)

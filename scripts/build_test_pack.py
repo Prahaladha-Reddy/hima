@@ -31,7 +31,7 @@ os.makedirs(out + "/audio", exist_ok=True)
 pieces = PieceTable.load(cfg["pieces"])
 reader = ClipStream(shards, specs, cfg["pieces"], cfg["model_dir"], cfg["data"], train=False)
 have, used = collections.Counter(), collections.Counter()
-counts = collections.Counter()
+counts = collections.Counter()                          # why clips were dropped; a Counter accepts any reason
 with open(out + ("/clips_%s.jsonl" % only_lang if only_lang else "/clips.jsonl"), "w", encoding="utf-8") as listing:
     for shard in sorted(shards, key=lambda s: (s["lang"], s["kind"], s["audio"].split("?")[0])):
         lang = shard["lang"]
