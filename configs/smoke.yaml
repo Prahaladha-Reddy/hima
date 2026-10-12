@@ -1,0 +1,47 @@
+# A tiny run that only proves the code works: one GPU, a few minutes.
+run: smoke
+model_dir: /dev/shm/hima/models/ears_base      # the speech model that the ears are taken from
+writer: unsloth/gemma-3-270m                   # the small language model that writes the text
+pieces: /dev/shm/hima/local/pieces.json        # made by scripts/build_pieces.py
+shards: /dev/shm/hima/local/shards_smoke.jsonl   # the list of shards (not in git)
+test_pack: /dev/shm/hima/local/test_pack       # made by scripts/build_test_pack.py
+out_dir: /dev/shm/hima/runs
+
+data:
+  tables: /dev/shm/hima/local/tables.yaml      # which columns of a shard's table to read (not in git)
+  heldout_keys: null          # an extra list of keys that belong to the test, one on a line
+  heldout_percent: 1          # of every 100 speakers or talks, this many belong to the test
+  min_seconds: 1.0            # shorter clips are dropped
+  max_seconds: 30.0           # longer clips are dropped
+  batch_seconds: 240          # sound in one batch on one GPU, padding counted
+  batch_clips: 64             # at most this many clips in a batch
+  pool_clips: 512             # clips that are sorted by length before they are cut into batches
+  shuffle_clips: 500          # size of the buffer that mixes clips of different shards
+  open_shards: 4              # shards that one data process reads at the same time
+  language_power: 0.5         # 1 = follow the hours of each language, 0 = every language the same
+  workers: 4                  # data processes for each GPU
+
+train:
+  seed: 1
+  max_steps: 300
+  writer_weight: 1.0          # weight of the writer loss (0 = no writer is built)
+  vote_weight: 0.3            # weight of the vote loss (0 = no vote layer is built)
+  lr_ears: 0.00003            # the ears are already trained, so they move slowly
+  lr_writer: 0.00005          # the writer is already trained on text, so it moves slowly too
+  lr_bridge: 0.001            # the bridge is new and learns fast
+  lr_vote: 0.001              # the vote layer is new and learns fast
+  warmup_steps: 100            # steps over which a learning rate rises from 0
+  ears_wait_steps: 100         # the ears do not move until the new parts have learned the basics
+  writer_wait_steps: 100       # the same for the writer
+  weight_decay: 0.01
+  clip_norm: 1.0              # a gradient longer than this is shortened
+  vote_hidden: 1024           # width of the middle of the vote layer
+  bridge_hidden: 1024         # width of the middle of the bridge
+  dropout: 0.1
+  hide_parts: true            # blank out small parts of the sound picture during training
+  log_every: 10
+  test_every: 100
+  save_every: 100
+  keep: 2                     # checkpoints kept on disk
+  stuck_seconds: 600          # if one step takes this long, print where the program is
+  resume: true

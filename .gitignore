@@ -27,3 +27,5 @@ __pycache__/
 .venv*/
 .DS_Store
 .ipynb_checkpoints/
+# private run files: lists of shards, table columns, test keys
+local/
