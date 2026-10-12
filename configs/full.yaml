@@ -1,6 +1,6 @@
 # The full run. Start it only after the small tests have shown which losses to use.
 run: full
-model_dir: /dev/shm/hima/models/ears_base      # the speech model that the ears are taken from
+model_dir: /dev/shm/hima/models/ears_large     # the speech model that the ears are taken from (the larger one)
 writer: unsloth/gemma-3-270m                   # the small language model that writes the text
 pieces: /dev/shm/hima/local/pieces.json        # made by scripts/build_pieces.py
 shards: /dev/shm/hima/local/shards.jsonl         # the list of shards (not in git)
