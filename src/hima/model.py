@@ -22,12 +22,12 @@ class Hima(nn.Module):
     def __init__(self, ears, number_of_votes=None, writer=None, vote_hidden=1024, dropout=0.1, bridge_hidden=1024):
         super().__init__()
         self.ears = ears
-        width = ears.config.d_model                                   # 896 numbers in a frame
+        width = ears.config.d_model                                   # 1,024 numbers in a frame with the ears of the full run
         self.vote = VoteLayer(width, number_of_votes, vote_hidden, dropout) if number_of_votes else None
         self.head = WriterHead(writer, width, bridge_hidden) if writer is not None else None
 
     def hear(self, picture, mask):
-        """-> frames [all real frames of the batch, 896], clip after clip, and the number of frames of each clip"""
+        """-> frames [all real frames of the batch, 1,024], clip after clip, and the number of frames of each clip"""
         frames = self.ears(picture, mask).last_hidden_state
         counts = frames_for(mask.sum(-1))
         assert int(counts.sum()) == frames.shape[0], (int(counts.sum()), frames.shape)

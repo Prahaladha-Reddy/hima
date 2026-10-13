@@ -3,7 +3,7 @@
 Sound goes through four steps:
   1. sound          16,000 numbers for each second
   2. sound picture  100 columns for each second, 128 numbers in a column   (made on the CPU, see data.py)
-  3. frames         about 13 frames for each second, 896 numbers each     (the ears make these)
+  3. frames         about 13 frames for each second, 1,024 numbers each     (the ears make these)
   4. votes          for each frame, one score for every piece in our table (the vote layer makes these)
 
 The ears come from Qwen3-ASR-0.6B and already hear. Training teaches them our languages.
@@ -68,7 +68,7 @@ class VoteLayer(nn.Module):
         self.layers = nn.Sequential(nn.Linear(width, hidden), nn.GELU(), nn.Dropout(dropout), nn.Linear(hidden, number_of_votes))
 
     def forward(self, frames, counts):
-        """frames: [all real frames of the batch, 896]  ->  scores [longest clip's frames, clips, votes] (log of probability)"""
+        """frames: [all real frames of the batch, 1,024]  ->  scores [longest clip's frames, clips, votes] (log of probability)"""
         scores = self.layers(frames).float().log_softmax(-1)
         return nn.utils.rnn.pad_sequence(torch.split(scores, counts.tolist()))
 

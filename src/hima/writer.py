@@ -5,7 +5,7 @@ The writer reads one long row of vectors and predicts the next piece of text, ag
     [start]  frame frame frame ... frame  [now write]  piece piece piece ...  [end]
              \\________ the sound ________/              \\____ the text ____/
 
-  - a frame comes from the ears (896 numbers). The BRIDGE turns it into a vector of the writer's size (640).
+  - a frame comes from the ears (1,024 numbers). The BRIDGE turns it into a vector of the writer's size (640).
   - a piece is a small part of a word. The writer has its own vector for each piece.
   - [now write] is one learned vector that says: the sound is over, the text begins.
 
@@ -45,7 +45,7 @@ class WriterHead(nn.Module):
         return self.writer.get_input_embeddings()(ids)
 
     def rows(self, frames, counts):
-        """For each clip: the vectors [start] + its frames + [now write].   frames: [all frames of the batch, 896]"""
+        """For each clip: the vectors [start] + its frames + [now write].   frames: [all frames of the batch, 1,024]"""
         sound = torch.split(self.bridge(frames), counts.tolist())
         start = self.piece_vectors(torch.tensor([self.start_id], device=frames.device))
         return [torch.cat([start, s.to(start.dtype), self.now_write[None].to(start.dtype)]) for s in sound]

@@ -5,6 +5,16 @@ Later it will also give decisions from the same sound: is the speaker done, shou
 
 **Status: the first full training run is in progress. Checkpoints appear on Hugging Face as it runs. No result is claimed yet.**
 
+## Try it
+
+```bash
+git clone https://github.com/Prahaladha-Reddy/hima && cd hima
+pip install torch torchaudio "transformers>=5.13" soundfile huggingface_hub
+python scripts/transcribe.py my_clip.wav
+```
+
+The script downloads the newest checkpoint from Hugging Face (about 2.4 GB) and prints the text. No login is needed.
+
 ## The model
 
 | Part | What it does | Where it comes from |
@@ -27,7 +37,7 @@ Languages: Assamese, Bengali, Gujarati, Hindi, Kannada, Malayalam, Marathi, Odia
 ```
 src/        model and training code
 configs/    one file per run
-scripts/    launch scripts
+scripts/    launch scripts, and transcribe.py to try a checkpoint
 docs/       decisions and how-to notes
 notes/      run logs, one file per run
 ```
