@@ -87,7 +87,7 @@ class WriterHead(nn.Module):
           - a clip may not get more pieces than its sound can hold: pieces_per_frame x its frames, plus 8.
             (Measured on our test clips: a true text needs up to about 1.0 piece for each frame in the densest language,
              and under 0.75 in the others. A first limit of 0.75 cut the end off good clips of that language. 1.5 leaves room.)
-          - if the end of the text is a loop (see is_stuck), the clip is ended and the loop is cut off.
+          - if the end of the text is a loop (see loop_length), the clip is ended and the loop is cut off.
         """
         prefixes = self.rows(frames, counts)
         clips, device, width = len(prefixes), frames.device, prefixes[0].shape[-1]
@@ -123,16 +123,30 @@ class WriterHead(nn.Module):
         return written
 
 
+def loop_length(pieces):
+    """How many pieces the loop at the end of the text has, or 0 if the text does not end in a loop.
+
+    A loop = the same 1 to 8 pieces, again and again: one piece 6 times, or a longer part 4 times.
+    (A word is often 3 or 4 pieces, so a loop on one word is a loop of 3 or 4 pieces.)
+    """
+    for size in range(1, 9):
+        times = 6 if size == 1 else 4
+        if len(pieces) >= size * times and pieces[-size * times:] == pieces[-size:] * times:
+            return size
+    return 0
+
+
 def is_stuck(pieces):
-    """True if the text ends in a loop: the same piece 6 times, or the same pair of pieces 4 times."""
-    if len(pieces) >= 6 and len(set(pieces[-6:])) == 1:
-        return True
-    return len(pieces) >= 8 and pieces[-8:] == pieces[-2:] * 4
+    """True if the text ends in a loop."""
+    return loop_length(pieces) > 0
 
 
 def cut_loop(pieces):
     """Removes the loop at the end, and keeps one copy of what was repeated."""
-    unit = pieces[-1:] if len(set(pieces[-6:])) == 1 else pieces[-2:]
-    while len(pieces) >= 2 * len(unit) and pieces[-2 * len(unit):] == unit * 2:
-        pieces = pieces[:-len(unit)]
+    size = loop_length(pieces)
+    if size == 0:
+        return pieces
+    unit = pieces[-size:]
+    while len(pieces) >= 2 * size and pieces[-2 * size:] == unit * 2:
+        pieces = pieces[:-size]
     return pieces
