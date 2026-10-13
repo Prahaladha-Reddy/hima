@@ -80,11 +80,18 @@ class WriterHead(nn.Module):
         return per_clip
 
     @torch.no_grad()
-    def write(self, frames, counts, most_pieces=200):
-        """The writer writes by itself, always taking its most likely next piece. -> one list of piece numbers for each clip"""
+    def write(self, frames, counts, most_pieces=200, pieces_per_frame=0.75, stop_loops=True):
+        """The writer writes by itself, always taking its most likely next piece. -> one list of piece numbers for each clip
+
+        A writer can get stuck and repeat one piece for ever. Two guards stop that:
+          - a clip may not get more pieces than its sound can hold: pieces_per_frame x its frames, plus 8.
+            (People speak 2 to 8 pieces a second, and there are about 13 frames a second, so 0.75 is far above real speech.)
+          - if the end of the text is a loop (see is_stuck), the clip is ended and the loop is cut off.
+        """
         prefixes = self.rows(frames, counts)
         clips, device, width = len(prefixes), frames.device, prefixes[0].shape[-1]
         longest = max(p.shape[0] for p in prefixes)
+        limits = [min(most_pieces, int(pieces_per_frame * int(n)) + 8) for n in counts]
         # Clips have different lengths. We pad on the LEFT, so that every clip ends at the same place and all can write together.
         inputs = torch.zeros(clips, longest, width, device=device, dtype=prefixes[0].dtype)
         seen = torch.zeros(clips, longest, device=device, dtype=torch.long)
@@ -99,11 +106,32 @@ class WriterHead(nn.Module):
             choice = self.writer.lm_head(last).argmax(-1)                          # the most likely next piece of each clip
             done |= choice == self.end_id
             for i in range(clips):
-                if not done[i]:
-                    written[i].append(int(choice[i]))
+                if done[i]:
+                    continue
+                written[i].append(int(choice[i]))
+                if len(written[i]) >= limits[i]:
+                    done[i] = True
+                elif stop_loops and is_stuck(written[i]):
+                    written[i] = cut_loop(written[i])
+                    done[i] = True
             if bool(done.all()):
                 break
             seen = torch.cat([seen, torch.ones(clips, 1, device=device, dtype=torch.long)], dim=1)
             out = self.writer.model(inputs_embeds=self.piece_vectors(choice)[:, None], attention_mask=seen, past_key_values=memory, use_cache=True)
             memory, last = out.past_key_values, out.last_hidden_state[:, -1]
         return written
+
+
+def is_stuck(pieces):
+    """True if the text ends in a loop: the same piece 6 times, or the same pair of pieces 4 times."""
+    if len(pieces) >= 6 and len(set(pieces[-6:])) == 1:
+        return True
+    return len(pieces) >= 8 and pieces[-8:] == pieces[-2:] * 4
+
+
+def cut_loop(pieces):
+    """Removes the loop at the end, and keeps one copy of what was repeated."""
+    unit = pieces[-1:] if len(set(pieces[-6:])) == 1 else pieces[-2:]
+    while len(pieces) >= 2 * len(unit) and pieces[-2 * len(unit):] == unit * 2:
+        pieces = pieces[:-len(unit)]
+    return pieces
