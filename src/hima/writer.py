@@ -80,12 +80,13 @@ class WriterHead(nn.Module):
         return per_clip
 
     @torch.no_grad()
-    def write(self, frames, counts, most_pieces=200, pieces_per_frame=0.75, stop_loops=True):
+    def write(self, frames, counts, most_pieces=512, pieces_per_frame=1.5, stop_loops=True):
         """The writer writes by itself, always taking its most likely next piece. -> one list of piece numbers for each clip
 
         A writer can get stuck and repeat one piece for ever. Two guards stop that:
           - a clip may not get more pieces than its sound can hold: pieces_per_frame x its frames, plus 8.
-            (People speak 2 to 8 pieces a second, and there are about 13 frames a second, so 0.75 is far above real speech.)
+            (Measured on our test clips: a true text needs up to about 1.0 piece for each frame in the densest language,
+             and under 0.75 in the others. A first limit of 0.75 cut the end off good clips of that language. 1.5 leaves room.)
           - if the end of the text is a loop (see is_stuck), the clip is ended and the loop is cut off.
         """
         prefixes = self.rows(frames, counts)
