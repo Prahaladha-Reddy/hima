@@ -50,4 +50,6 @@ notes/      run logs, one file per run
 
 ## Licence
 
-The code is under the Apache 2.0 licence. Each checkpoint states its own licence, because the parts it starts from have their own terms.
+The code is under the Apache 2.0 licence.
+
+The checkpoints: what is ours (the bridge, the vote layer, and the changes that training made) is under Apache 2.0. The ears start from Qwen3-ASR-1.7B, which is Apache 2.0. The writer starts from Gemma 3 270M, and that part stays under the [Gemma Terms of Use](https://ai.google.dev/gemma/terms). The file `NOTICE` on the model page has the details.
